@@ -11,7 +11,7 @@ func TestScanner_Scan(t *testing.T) {
 		Client: client,
 		Rate:   30,
 		Tag:    "meitui",
-		Url:    "https://mzt8.com/",
+		Type:   1,
 		Limit:  200,
 		Output: "2/",
 	}

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func (s *Scanner) getByXpathUrl(url, xpathExpr string, out chan string) ([]string, error) {
@@ -37,63 +36,58 @@ func (s *Scanner) getByXpathUrl(url, xpathExpr string, out chan string) ([]strin
 }
 
 func (s *Scanner) Scan() (err error) {
-	if s.request["tag"] != "" {
-		s.request["url"], err = url.JoinPath(s.request["url"], "tag", s.request["tag"])
-		if err != nil {
-			return err
-		}
+	err = s.selection()
+	if err != nil {
+		return err
 	}
+	var AllOfResults int
 	s.wg.Add()
 	go func(U, xpath string) {
 		defer func() {
 			close(s.imgHtmlChan)
 			s.wg.Done()
 		}()
-		var numberOfResults int
+
 		page := 1
 		for {
-			limit, err := strconv.Atoi(s.request["limit"])
+			limit, err := strconv.Atoi(s.request["limit"].(string))
 			if err != nil {
 				break
 			}
-			u, _ := url.JoinPath(U, "page", strconv.Itoa(page))
-			imgUrl, err := s.getByXpathUrl(u, "//a[contains(@class, 'entry-thumbnail')]/@href", s.imgHtmlChan)
+			u, _ := url.JoinPath(U, strconv.Itoa(page))
+			imgUrl, err := s.getByXpathUrl(u, xpath, s.imgHtmlChan)
 			if err != nil {
 				continue
 			}
-
-			if len(imgUrl) == 0 || len(imgUrl) > limit || numberOfResults > limit {
+			s.lock.Lock()
+			if len(imgUrl) == 0 || len(imgUrl) > limit || AllOfResults > limit {
+				s.lock.Unlock()
 				break
 			}
+			s.lock.Unlock()
 			page++
-			numberOfResults += len(imgUrl) * 20
 		}
-	}(s.request["url"], "//a[contains(@class, 'entry-thumbnail')]/@href")
+	}(s.request["url"].(string)+s.request["path"].(string), s.request["img_path"].(string))
 	s.wg.Add()
-	go func() {
+	go func(xpath string) {
 		defer func() {
 			close(s.imgUrlChan)
+
 			s.wg.Done()
 		}()
-		var numberOfResults int
-		wg := sync.WaitGroup{}
 		for img := range s.imgHtmlChan {
-			wg.Add(1)
-			go func(img string) {
-				defer func() {
-					wg.Done()
-				}()
-				imgUrl, err := s.getByXpathUrl(img, "//div[contains(@class, 'entry themeform')]//img/@src", s.imgUrlChan)
+			func(img string) {
+				imgUrl, err := s.getByXpathUrl(img, xpath, s.imgUrlChan)
 				if err != nil {
 					return
 				}
-				numberOfResults += len(imgUrl)
-
+				s.lock.Lock()
+				AllOfResults += len(imgUrl)
+				s.lock.Unlock()
 			}(img)
 		}
 
-		wg.Wait()
-	}()
+	}(s.request["img_url"].(string))
 
 	for u := range s.imgUrlChan {
 		parse, err := url.Parse(u)

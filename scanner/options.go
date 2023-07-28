@@ -2,7 +2,6 @@ package scanner
 
 import (
 	"context"
-	"fmt"
 	"github.com/iahfdoa/crawlsForBeauty/util"
 	"github.com/projectdiscovery/ratelimit"
 	"github.com/remeh/sizedwaitgroup"
@@ -16,14 +15,14 @@ type Options struct {
 	Client *http.Client
 	Rate   int
 	Tag    string
-	Url    string
 	Limit  int
 	Output string
+	Type   int
 }
 
 type Scanner struct {
 	client      *http.Client
-	request     map[string]string
+	request     map[string]interface{}
 	imgHtmlChan chan string
 	imgUrlChan  chan string
 	output      string
@@ -34,9 +33,6 @@ type Scanner struct {
 }
 
 func NewScanner(options *Options) (*Scanner, error) {
-	if options.Url == "" {
-		return nil, fmt.Errorf("错误的目标: url、xpathExpr 不能为空")
-	}
 	if options.Output != "" {
 		err := util.CreateDir(options.Output)
 		if err != nil {
@@ -49,11 +45,8 @@ func NewScanner(options *Options) (*Scanner, error) {
 	*wg = sizedwaitgroup.New(options.Rate)
 	// 初始化
 	scan := &Scanner{}
-	request := make(map[string]string)
-	request["tag"] = options.Tag
-	request["url"] = options.Url
+	request := make(map[string]interface{})
 	limit := strconv.Itoa(options.Limit)
-	request["limit"] = limit
 	scan.client = options.Client
 	scan.request = request
 	scan.imgHtmlChan = make(chan string)
@@ -62,5 +55,9 @@ func NewScanner(options *Options) (*Scanner, error) {
 	scan.output = options.Output
 	scan.limiter = limiter
 	scan.wg = wg
+	request["limit"] = limit
+	request["tag"] = options.Tag
+	request["type"] = options.Type
+
 	return scan, nil
 }
