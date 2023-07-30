@@ -3,6 +3,7 @@ package runner
 import "github.com/gosuri/uiprogress"
 
 func (r *Runner) Run() error {
+	uiprogress.Start() // 开始进度条
 	go func() {
 		for range r.Scanner.NumChan {
 			r.Bar.Incr()

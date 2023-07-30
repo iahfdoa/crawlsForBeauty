@@ -21,3 +21,58 @@ root@VM-4-13-ubuntu:~# crawlsForBeauty
 crawlsForBeauty -h
 ```
 
+```go
+// tag 类型 t 为图库 i为tag
+tagFunc := func(t, i int) string {
+		switch t {
+		case 2:
+			switch i {
+			case 1:
+				return "latest"
+			case 2:
+				return "hot"
+			case 3:
+				return "toplist"
+			case 4:
+				return "random"
+			default:
+				return ""
+			}
+		case 1:
+			switch i {
+			case 1:
+				return "stockings-porn"
+			case 2:
+				return "foot-fetish-porn"
+			case 3:
+				return "housewife-porn"
+			case 4:
+				return "teacher-porn"
+			case 5:
+				return "teen-porn"
+			case 6:
+				return "masturbation-porn"
+			default:
+				return "homemade-porn"
+			}
+		default:
+			switch i {
+			case 1:
+				return "meitui"
+			case 2:
+				return "meixiong"
+			case 3:
+				return "meitun"
+			case 4:
+				return "shenyan"
+			case 5:
+				return "xiaoxinggan"
+			case 6:
+				return "xiaotianmei"
+			default:
+				return ""
+			}
+
+		}
+	}
+```

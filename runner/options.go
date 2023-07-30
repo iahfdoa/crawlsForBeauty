@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"github.com/gosuri/uiprogress"
 	"github.com/gosuri/uiprogress/util/strutil"
 	"github.com/iahfdoa/crawlsForBeauty/scanner"
@@ -8,6 +9,7 @@ import (
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -33,7 +35,7 @@ func ParserOptions() *Options {
 	set := goflags.NewFlagSet()
 	set.SetDescription("crawlsForBeauty 美女图片爬虫工具")
 	set.CreateGroup("Input", "输入",
-		set.IntVar(&options.Type, "type", 0, "图库(0,1)"),
+		set.IntVar(&options.Type, "type", 0, "图库(0,1,2)"),
 		set.IntVarP(&options.Tag, "tag", "t", 0, "类型 （1,2,3,4,5,6）"),
 	)
 	set.CreateGroup("Config", "配置",
@@ -56,7 +58,7 @@ func ParserOptions() *Options {
 }
 
 func NewRunner(options *Options) (*Runner, error) {
-	uiprogress.Start() // 开始进度条
+
 	bar := uiprogress.AddBar(options.Limit)
 	bar.Width = 100
 	bar.AppendCompleted()
@@ -66,6 +68,19 @@ func NewRunner(options *Options) (*Runner, error) {
 	uiprogress.RefreshInterval = 100 * time.Millisecond
 	tagFunc := func(t, i int) string {
 		switch t {
+		case 2:
+			switch i {
+			case 1:
+				return "latest"
+			case 2:
+				return "hot"
+			case 3:
+				return "toplist"
+			case 4:
+				return "random"
+			default:
+				return ""
+			}
 		case 1:
 			switch i {
 			case 1:
@@ -105,6 +120,9 @@ func NewRunner(options *Options) (*Runner, error) {
 	}
 	if options.Output == "" {
 		options.Output = "output/"
+	}
+	if !strings.HasSuffix(options.Output, "/") {
+		options.Output = fmt.Sprintf("%s/", options.Output)
 	}
 	newScanner, err := scanner.NewScanner(&scanner.Options{
 		Client: util.NewClient(options.Proxy, options.ProxyAuth),

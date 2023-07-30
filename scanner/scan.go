@@ -15,7 +15,6 @@ func (s *Scanner) getByXpathUrl(url, xpathExpr string, out chan string) ([]strin
 	if err != nil {
 		return nil, err
 	}
-
 	doc, err := htmlquery.Parse(strings.NewReader(text))
 	if err != nil {
 		return nil, err
@@ -54,7 +53,14 @@ func (s *Scanner) Scan() (err error) {
 			if err != nil {
 				break
 			}
-			u, _ := url.JoinPath(U, strconv.Itoa(page))
+			var u string
+			switch s.request["type"] {
+			case 2:
+				u = U + strconv.Itoa(page)
+			default:
+				u, _ = url.JoinPath(U, strconv.Itoa(page))
+			}
+
 			imgUrl, err := s.getByXpathUrl(u, xpath, s.imgHtmlChan)
 			if err != nil {
 				continue
@@ -76,20 +82,37 @@ func (s *Scanner) Scan() (err error) {
 			s.wg.Done()
 		}()
 		for img := range s.imgHtmlChan {
-			func(img string) {
-				imgUrl, err := s.getByXpathUrl(img, xpath, s.imgUrlChan)
-				if err != nil {
-					return
-				}
-				s.lock.Lock()
-				AllOfResults += len(imgUrl)
-				s.lock.Unlock()
-			}(img)
+			switch s.request["type"] {
+			case 2:
+				func(img string) {
+					s.imgUrlChan <- img
+					s.lock.Lock()
+					AllOfResults += 1
+					s.lock.Unlock()
+				}(img)
+			default:
+				func(img string) {
+					imgUrl, err := s.getByXpathUrl(img, xpath, s.imgUrlChan)
+					if err != nil {
+						return
+					}
+					s.lock.Lock()
+					AllOfResults += len(imgUrl)
+					s.lock.Unlock()
+				}(img)
+			}
+
 		}
 
 	}(s.request["img_url"].(string))
 
 	for u := range s.imgUrlChan {
+		if s.UrlCallBackFunc != nil {
+			u, err = s.UrlCallBackFunc(u)
+			if err != nil {
+				continue
+			}
+		}
 		parse, err := url.Parse(u)
 		if err != nil {
 			continue

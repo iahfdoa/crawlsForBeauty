@@ -10,6 +10,26 @@ func (s *Scanner) selection() error {
 	switch s.request["type"].(type) {
 	case int:
 		switch s.request["type"] {
+		case 2:
+			switch {
+			case s.request["tag"] != "":
+				s.request["path"] = fmt.Sprintf("/%s?page=", s.request["tag"])
+			default:
+				s.request["path"] = "/toplist?page="
+			}
+
+			s.request["url"] = "https://wallhaven.cc"
+			s.request["img_path"] = "//section[@class='thumb-listing-page']//a[@class='preview']/@href"
+			s.request["img_url"] = ""
+			s.UrlCallBackFunc = func(str string) (string, error) {
+				if len(str) <= 6 {
+					return "", errors.New("字符串长度小于6位")
+				}
+				length := len(str)
+				name := str[length-6:]
+				url := fmt.Sprintf("https://w.wallhaven.cc/full/%s/wallhaven-%s.jpg", name[:2], name)
+				return url, nil
+			}
 		case 1:
 			switch {
 			case s.request["tag"] != "":

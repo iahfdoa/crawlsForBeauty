@@ -21,15 +21,16 @@ type Options struct {
 }
 
 type Scanner struct {
-	client      *http.Client
-	request     map[string]interface{}
-	imgHtmlChan chan string
-	imgUrlChan  chan string
-	output      string
-	limiter     *ratelimit.Limiter
-	wg          *sizedwaitgroup.SizedWaitGroup
-	lock        sync.Mutex
-	NumChan     chan struct{}
+	client          *http.Client
+	request         map[string]interface{}
+	imgHtmlChan     chan string
+	imgUrlChan      chan string
+	output          string
+	limiter         *ratelimit.Limiter
+	wg              *sizedwaitgroup.SizedWaitGroup
+	lock            sync.Mutex
+	NumChan         chan struct{}
+	UrlCallBackFunc func(str string) (string, error)
 }
 
 func NewScanner(options *Options) (*Scanner, error) {
