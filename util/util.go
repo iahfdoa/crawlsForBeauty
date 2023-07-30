@@ -2,6 +2,7 @@ package util
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +12,9 @@ import (
 )
 
 func CreateDir(dirPath string) error {
+	if !strings.HasSuffix(dirPath, "/") {
+		dirPath = fmt.Sprintf("%s/", dirPath)
+	}
 	outputFolder := filepath.Dir(dirPath)
 	if mkdirErr := os.MkdirAll(outputFolder, 0700); mkdirErr != nil {
 		return mkdirErr
@@ -73,7 +77,26 @@ func NewClient(proxy, auth string) *http.Client {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS10},
 	}
 	return &http.Client{
-		Timeout:   10 * time.Second,
+		Timeout:   60 * time.Second,
 		Transport: transport,
 	}
+}
+func GetAllFilesInDir(dirpath string) ([]string, error) {
+	var filepaths []string
+
+	err := filepath.Walk(dirpath, func(path string, f os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if f.Mode().IsRegular() { // 检查是否为普通文件
+			filepaths = append(filepaths, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return filepaths, nil
 }

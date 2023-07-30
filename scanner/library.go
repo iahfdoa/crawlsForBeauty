@@ -10,12 +10,48 @@ func (s *Scanner) selection() error {
 	switch s.request["type"].(type) {
 	case int:
 		switch s.request["type"] {
-		case 2:
+		case 3:
 			switch {
 			case s.request["tag"] != "":
-				s.request["path"] = fmt.Sprintf("/%s?page=", s.request["tag"])
+				s.request["path"] = fmt.Sprintf("/cat/%s?page=", s.request["tag"])
 			default:
-				s.request["path"] = "/toplist?page="
+				s.request["path"] = fmt.Sprintf("/cat/7?page=")
+			}
+			s.request["url"] = "https://www.photos18.com"
+			s.request["img_path"] = "//div[@class=\"card\"]//a[@class=\"visited\"]/@href"
+			s.request["img_url"] = "//div[@class=\"fullwidth\"]//a/@href"
+		case 2:
+			tag := s.request["tag"].(string)
+			tagInfo := strings.Split(tag, ":")
+			if len(tagInfo) < 2 {
+				return errors.New("error tag")
+			}
+			var topRange string
+
+			var categories string
+			switch tagInfo[0] {
+			case "toplist":
+				topRange = "1y"
+			default:
+				topRange = ""
+			}
+			switch tagInfo[1] {
+			case "5":
+				categories = "111"
+			case "96280":
+				categories = "111"
+			default:
+				categories = "101"
+			}
+			sorting := tagInfo[0]
+			id := tagInfo[1]
+			switch id {
+			case "0":
+				s.request["path"] = "/search?categories=110&purity=010&atleast=1920x1080&topRange=1y&sorting=toplist&order=desc&ai_art_filter=1&page="
+			default:
+				s.request["path"] = fmt.Sprintf("/search?q=id:%s&atleast=1920x1080&categories=%s&purity=010&sorting=%s&order=desc&topRange=%s&page=", id, categories, sorting, topRange)
+			case "-1":
+				s.request["path"] = fmt.Sprintf("/search?categories=110&purity=100&atleast=1920x1080&topRange=1M&sorting=toplist&order=desc&page=")
 			}
 
 			s.request["url"] = "https://wallhaven.cc"

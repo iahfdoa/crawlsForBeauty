@@ -62,3 +62,16 @@ func NewScanner(options *Options) (*Scanner, error) {
 
 	return scan, nil
 }
+
+func (s *Scanner) SetType(t int) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.request["type"] = t
+
+}
+
+func (s *Scanner) SetOutput(output string) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.output = output
+}
